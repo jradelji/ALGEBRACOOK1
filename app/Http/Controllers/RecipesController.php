@@ -19,13 +19,19 @@ class RecipesController extends Controller
 	public function index(Request $request)
 	{
 		return view ('recipes.index')->with('recipes', Recipe2::get());
+		
+	}
+	
+	public function deleteRecipe($id) 
+	{
+		Recipe2::findOrFail($id)->delete();
+	
+		return redirect('/');
 	}
 	
 	public function view($id)
 	{
-		$recipes = Recipe2::find($id);
-		return view('recipes.view', ['recipe'=> $recipes]);
-		//return $recipes;
+		return view('recipes.view')->with('recipe', Recipe2::find($id));
 	}
 	
 	public function add()
@@ -33,48 +39,54 @@ class RecipesController extends Controller
 		return view('recipes.add');
 	}
 	
-	public function edit($id) {
-		return view('recipes.edit')
-		->with('recipe', Recipe2::find($id));
+	public function edit($id)
+	{
+		return view('recipes.edit')->with('recipe', Recipe2::find($id));
+		
 	}
+	
 	public function update(Request $request)
 	{
-		$data = $request -> all();
+		$data = $request->all();
 		$recipe = Recipe2::find($data['id']);
-		if($recipe->creator_id !== auth()->user()->id)
+		if ($recipe->creator_id !== auth()->user()->id)
 			return redirect()->action('RecipesController@index');
-		foreach($recipe->ingredients as $ingrediant)
-		$ingrediant->delete();
+		
+		foreach($recipe->ingredients as $ingredient)
+			$ingredient->delete();
+			
 		$recipe->name = $data['name'];
 		$recipe->description = $data['description'];
 		
 		if($recipe->save())
 		{
-			foreach ($data['ingredient'] as $key => $value)
+			foreach($data['ingredient'] as $key => $value)
 			{
-				$sastojak = new Ingredient;
+				$sastojak= new Ingredient;
 				$sastojak->name = $value;
 				$sastojak->recipe2_id = $recipe->id;
 				$sastojak->save();
 			}
 		}
+		
 		return redirect()->action('RecipesController@index');
 	}
+	
 	public function save(Request $request)
 	{
 		$data = $request->all();
 		$noviRecept = new Recipe2;
-		$noviRecept->name = $data['name'];
-		$noviRecept->description = $data['description'];
-		$noviRecept->creator_id = auth()->user()->id;
+		$noviRecept->name=$data['name'];
+		$noviRecept->description=$data['description'];
+		$noviRecept->creator_id=auth()->user()->id;
 		
 		if($noviRecept->save())
 		{
-			foreach ($data['ingredient'] as $key=>$value)
+			foreach($data['ingredient'] as $key => $value)
 			{
 				$sastojak = new Ingredient;
-				$sastojak->name = $value;
-				$sastojak->recipe2_id = $noviRecept->id;
+				$sastojak->name=$value;
+				$sastojak->recipe2_id=$noviRecept->id;
 				$sastojak->save();
 			}
 		}
